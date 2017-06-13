@@ -1,7 +1,8 @@
 import pyaudio
 import speech_recognition as sr
-from notes_command import take_note
-from wiki_command import search_wiki
+from command_notes import take_note
+from command_wiki import search_wiki
+from command_meaning import find_meaning
 
 
 def map_text_to_command(text_spoke):
@@ -12,6 +13,9 @@ def map_text_to_command(text_spoke):
 	elif 'wiki' in text_spoke:
 		is_success = search_wiki(text_spoke)
 		s = 'Wiki search made. Please be patient for the page to load!' if is_success else 'Failure in search'
+	elif 'dictionary' in text_spoke:
+		is_success = find_meaning(text_spoke) 
+		s = 'Hope you got the answer!' if is_success else 'Failure in search'
 	return s
 
 
