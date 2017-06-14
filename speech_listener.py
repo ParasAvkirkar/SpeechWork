@@ -1,5 +1,8 @@
 import pyaudio
 import speech_recognition as sr
+import sys, os
+import datetime
+
 from command_notes import take_note
 from command_wiki import search_wiki
 from command_meaning import find_meaning
@@ -26,6 +29,10 @@ def map_text_to_command(text_spoke):
 	except Exception as e:
 		print(str(e))
 		s = 'Failure while performing task'
+		# print('Exception at line '+ str(exc_tb.tb_lineno))
+		# exc_type, exc_obj, exc_tb = sys.exc_info()
+		# print('Time: {0} File: {1} Line: {2} User: {3} '.format(datetime.datetime.now(), os.path.basename(__file__),
+  #                                                                                         exc_tb.tb_lineno))
 
 	return s
 
@@ -45,8 +52,8 @@ def listen(device_index, timeout=10, phrase_time_limit=10):
 		print('Listening finished')
 		try:
 			text_spoke = str(r.recognize_google(audio))
-			text_spoke = text_spoke.lower()
 			# text_spoke = 'cricket pakistan versus england'
+			text_spoke = text_spoke.lower()
 
 			print("You said " + text_spoke)	
 			s = map_text_to_command(text_spoke)
