@@ -13,6 +13,8 @@ BOT_NAME = 'SpeechWork'
 
 SPIDER_MODULES = ['SpeechWork.spiders']
 NEWSPIDER_MODULE = 'SpeechWork.spiders'
+# LOG_STDOUT = False
+# LOG_FILE = 'scrapy_output.txt'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent

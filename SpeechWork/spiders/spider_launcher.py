@@ -4,7 +4,11 @@ from scrapy.utils.project import get_project_settings
 
 
 def launch_spider(url, utility_spider_name):
-	process = CrawlerProcess(get_project_settings())
+	settings = get_project_settings()
+	settings.set('LOG_STDOUT', False)
+	settings.set('LOG_FILE', 'scrapy_output.txt')
+
+	process = CrawlerProcess(settings)
 
 	print('Launching spider: ' + utility_spider_name + ' ' + url)
 

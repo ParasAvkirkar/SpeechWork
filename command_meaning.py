@@ -1,8 +1,10 @@
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
-#from utility_spiders.utility_spiders.spiders.spider_launcher import launch_spider
 from SpeechWork.spiders.spider_launcher import launch_spider
 
+import pickle
+import pyttsx
+import os
 
 def get_word(text_spoke):
 	is_dictionary_tag_found = False
@@ -13,14 +15,48 @@ def get_word(text_spoke):
 		if 'dict' in word:
 			is_dictionary_tag_found = True
 
+# Currently age and female properties are not available
+# They are just added as skeleton
+# When a workaround or provision for such properties will be available,
+# then at that time this function will modified to get voice property of that
+# Currently only by accent voice proprety is returned
+def get_voice_property(engine, age=30, gender='female', accent='english-us'):
+	voices = engine.getProperty('voices')
+	for voice in voices:
+		if accent in str(voice.name):
+			return voice
+
+	raise ValueError('Demanded accent does not matched')
+
+# Meaning strings are strings returned by spider
+# Only fix number of top defintions would be 'said' by PyTTSx Engine
+def say(meaning_strings, top_definitions=3):
+	engine = pyttsx.init()
+	engine.setProperty('rate', 150)
+
+	i = 1
+	voice = get_voice_property(engine, age=10, gender='female')
+	engine.setProperty('voice', voice.id)
+	for s in meaning_strings:
+	    if i > top_definitions:
+	    	break
+	    
+	    print(s)
+	    engine.say(s)
+	    i += 1    
+	engine.runAndWait()
+
 def find_meaning(text_spoke):
-	try:
-		word = get_word(text_spoke)
-		get_request_url = 'http://www.dictionary.com/browse/' + word + '?s=ts'
-		print('Word found: ' + word + ' Url: ' + get_request_url)
+	word = get_word(text_spoke)
+	get_request_url = 'http://www.dictionary.com/browse/' + word + '?s=ts'
+	print('Word found: ' + word + ' Url: ' + get_request_url)
+
+	if not os.path.isfile('meanings/' + word + '.pickle'):
 		launch_spider(utility_spider_name='dictionary.com', url=get_request_url)
 
-		return True
-	except Exception as e:
-		print(str(e))
-		return False
+	meaning_strings = []
+	with open('meanings/' + word + '.pickle', 'rb') as f:
+		meaning_strings = pickle.load(f)
+
+	# print(meaning_strings)
+	say(meaning_strings)

@@ -21,14 +21,10 @@ def save_note(note_name, note_content):
 		pickle.dump(note_dict, f)
 
 def take_note(text_spoke):
-	try:
-		note_content = find_note_content(text_spoke)
-		note_name = note_content.split()[0]
-		note_content = " ".join(note_content.split()[1:])
-		print(note_name + ' ' + note_content)
-		save_note(note_name, note_content)
-	except Exception as e:
-		print(str(e))
-		return False
+	note_content = find_note_content(text_spoke)
+	note_name = note_content.split()[0]
+	note_content = " ".join(note_content.split()[1:])
+	print(note_name + ' ' + note_content)
+	save_note(note_name, note_content)
 
 	return True

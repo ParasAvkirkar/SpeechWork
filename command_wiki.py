@@ -17,21 +17,16 @@ def get_list_of_keywords(text_spoke):
 
 
 def search_wiki(text_spoke):
-	try:
-		keyword_list = get_list_of_keywords(text_spoke)
-		default_url = 'https://en.wikipedia.org/w/index.php?search='
-		search_params = '+'.join(keyword_list)
+	keyword_list = get_list_of_keywords(text_spoke)
+	default_url = 'https://en.wikipedia.org/w/index.php?search='
+	search_params = '+'.join(keyword_list)
 
-		# Chrome option of detach is set to True,
-		# so that browser does not closes after script terminates
-		opts = ChromeOptions()
-		opts.add_experimental_option("detach", True)
-		driver = Chrome(chrome_options=opts)
+	# Chrome option of detach is set to True,
+	# so that browser does not closes after script terminates
+	opts = ChromeOptions()
+	opts.add_experimental_option("detach", True)
+	driver = Chrome(chrome_options=opts)
+	
+	print('Launched chrome driver. Searching: ' + default_url + search_params)
+	driver.get(default_url + search_params)
 		
-		print('Launched chrome driver. Searching: ' + default_url + search_params)
-		driver.get(default_url + search_params)
-		
-		return True
-	except Exception as e:
-		print(str(e))
-		return False
