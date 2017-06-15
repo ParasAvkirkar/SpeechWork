@@ -8,9 +8,21 @@ from command_wiki import search_wiki
 from command_meaning import find_meaning
 from command_cricket import get_score_live
 
+dispatcher_based_on_keywords = [
+	(['take','note'], take_note),
+	(['wikipedia', 'wiki'], search_wiki),
+	(['dict', 'meaning'], find_meaning),
+	(['cric', 'versus', 'vs'], get_score_live)
+]
+
 def map_text_to_command(text_spoke):
 	s = 'Command not recognised. Please speak again'
 	try:
+		# for keyword_list in dispatcher_based_on_keywords:
+		# 	for keyword in keyword_list:
+		# 		if keyword in text_spoke:
+
+
 		if 'take' in text_spoke and 'note' in text_spoke:
 			take_note(text_spoke)
 			s = 'Note taken'
@@ -29,10 +41,10 @@ def map_text_to_command(text_spoke):
 	except Exception as e:
 		print(str(e))
 		s = 'Failure while performing task'
-		# print('Exception at line '+ str(exc_tb.tb_lineno))
-		# exc_type, exc_obj, exc_tb = sys.exc_info()
-		# print('Time: {0} File: {1} Line: {2} User: {3} '.format(datetime.datetime.now(), os.path.basename(__file__),
-  #                                                                                         exc_tb.tb_lineno))
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		print('Exception at line '+ str(exc_tb.tb_lineno))
+		print('Time: {0} File: {1} Line: {2} User: {3} '.format(datetime.datetime.now(), os.path.basename(__file__),
+                                                                                          exc_tb.tb_lineno))
 
 	return s
 
@@ -46,7 +58,7 @@ def listen(device_index, timeout=10, phrase_time_limit=10):
 	try:
 		with sr.Microphone(device_index=device_index) as source:
 			print('Listening now. Speak within {0} seconds'.format(timeout + phrase_time_limit - 5))
-			print(str(source))
+			# print(str(source))
 			audio = r.listen(source, timeout=timeout, phrase_time_limit=phrase_time_limit)
 
 		print('Listening finished')
@@ -55,7 +67,7 @@ def listen(device_index, timeout=10, phrase_time_limit=10):
 			# text_spoke = 'cricket pakistan versus england'
 			text_spoke = text_spoke.lower()
 
-			print("You said " + text_spoke)	
+			print("You said: " + text_spoke)	
 			s = map_text_to_command(text_spoke)
 			print(s)			
 			
