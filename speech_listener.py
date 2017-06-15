@@ -7,34 +7,15 @@ from command_notes import take_note
 from command_wiki import search_wiki
 from command_meaning import find_meaning
 from command_cricket import get_score_live
-
-dispatcher_based_on_keywords = [
-	(['take','note'], take_note),
-	(['wikipedia', 'wiki'], search_wiki),
-	(['dict', 'meaning'], find_meaning),
-	(['cric', 'versus', 'vs'], get_score_live)
-]
+from text_utilities import sanitize_input
 
 def map_text_to_command(text_spoke):
 	s = 'Command not recognised. Please speak again'
 	try:
-		# for keyword_list in dispatcher_based_on_keywords:
-		# 	for keyword in keyword_list:
-		# 		if keyword in text_spoke:
-
-
-		if 'take' in text_spoke and 'note' in text_spoke:
-			take_note(text_spoke)
-			s = 'Note taken'
-		elif 'wiki' in text_spoke:
-			search_wiki(text_spoke)
-			s = 'Wiki search made. Please be patient for the page to load!'
-		elif 'dictionary' in text_spoke:
-			find_meaning(text_spoke) 
-			s = 'Hope you got the answer!'
-		elif 'cric' in text_spoke:
-			get_score_live(text_spoke)
-			s = 'Grace is always complementary with sport-skills!'
+		
+		dispatcher, new_key_words_list = sanitize_input(text_spoke)
+		s = dispatcher(keywords = new_key_words_list)
+		s = '' if s is None else s
 	except ValueError as v:
 		print(str(v))
 		s = 'Failure while performing task'
@@ -57,7 +38,7 @@ def listen(device_index, timeout=10, phrase_time_limit=10):
 	r = sr.Recognizer()
 	try:
 		with sr.Microphone(device_index=device_index) as source:
-			print('Listening now. Speak within {0} seconds'.format(timeout + phrase_time_limit - 5))
+			print('Listening now. Speak within {0} seconds'.format(timeout))
 			# print(str(source))
 			audio = r.listen(source, timeout=timeout, phrase_time_limit=phrase_time_limit)
 

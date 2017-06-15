@@ -83,15 +83,14 @@ class Cric_Daemon(daemon):
 
 
 # The core handler which does following task by delegating subtask to other modules:
-# 1: Cleans input speech
-# 2: Fetch the data from cricbuzz api
-# 3: Builds the sentences
-# 4: Feeds the sentences to be spoken to a sound device engine
-def get_score_live(text_spoke):
+# 1: Fetch the data from cricbuzz api
+# 2: Builds the sentences
+# 3: Feeds the sentences to be spoken to a sound device engine
+def get_score_live(keywords):
 	try:
 		c = Cricbuzz()
 		# match_basic_info only contains introductory information and not actual match information
-		match_basic_info = get_match_basic_info(text_spoke, c)
+		match_basic_info = get_match_basic_info(keywords=keywords, crickbuzz=c)
 		
 		sentences = []
 		if 'inprogress' not in match_basic_info['mchstate']:
@@ -131,7 +130,6 @@ def get_score_live(text_spoke):
 	except Exception as e:
 		print(str(traceback.format_exc()))
 		raise e
-		
 	
 def clean_commentary(commentary):
 	if 'out' in commentary:
@@ -140,10 +138,9 @@ def clean_commentary(commentary):
 		commentary = commentary.replace(' ')
 
 
-
-
-def get_match_basic_info(text_spoke, crickbuzz):
-	first_team, second_team = get_countries_playing(text_spoke)
+def get_match_basic_info(keywords, crickbuzz=None):
+	first_team = keywords[0]
+	second_team = keywords[1]
 	first_team = map_to_cricbuzz_country_notation[first_team]
 	second_team = map_to_cricbuzz_country_notation[second_team]
 	
@@ -165,7 +162,8 @@ def is_match_asked_live(match_basic_info, first_team_asked, second_team_asked):
 		 	and second_team_asked in match_basic_info['mchdesc']
 
 
-
+# Currently deprecated, as a new input sanitiser is written, which returns a keyword list 
+# containing countries name
 # Returns name of the countries by stripping off versus or vs in speech
 def get_countries_playing(text_spoke):
 	is_cricket_tag_found = False

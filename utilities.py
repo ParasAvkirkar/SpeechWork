@@ -1,4 +1,5 @@
-
+import sys, os
+import datetime
 
 # Currently age and female properties are not available
 # They are just added as skeleton
@@ -12,3 +13,8 @@ def get_voice_property(engine, age=30, gender='female', accent='english-us'):
 			return voice
 
 	raise ValueError('Demanded accent does not matched')
+
+
+
+if __name__ == '__main__':
+	pass

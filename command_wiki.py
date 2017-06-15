@@ -1,7 +1,8 @@
 from selenium import webdriver
 from selenium.webdriver import ChromeOptions, Chrome
 
-
+# Currently deprecated, as a new input sanitiser is written, which returns a keyword list 
+# containing topic which is to be searched from wikipedia
 # wikipedia or wiki is a tag word after which search keywords follows
 def get_list_of_keywords(text_spoke):
 	is_wiki_tag_found = False
@@ -16,10 +17,9 @@ def get_list_of_keywords(text_spoke):
 
 
 
-def search_wiki(text_spoke):
-	keyword_list = get_list_of_keywords(text_spoke)
+def search_wiki(keywords):
 	default_url = 'https://en.wikipedia.org/w/index.php?search='
-	search_params = '+'.join(keyword_list)
+	search_params = '+'.join(keywords)
 
 	# Chrome option of detach is set to True,
 	# so that browser does not closes after script terminates
@@ -29,4 +29,7 @@ def search_wiki(text_spoke):
 	
 	print('Launched chrome driver. Searching: ' + default_url + search_params)
 	driver.get(default_url + search_params)
+
+	return 'Wiki search made. Please be patient for the page to load!'
+
 		

@@ -1,6 +1,8 @@
 import datetime
 import pickle
 
+# Currently deprecated, as a new input sanitiser is written, which returns a keyword list 
+# containing name and content of note
 # This method chucks the string before the name tag specified through speech
 def find_note_content(text_spoke):
 	is_name_tag_found = False
@@ -20,11 +22,10 @@ def save_note(note_name, note_content):
 	with open('notes/'+ note_name + '_' + str(datetime.datetime.now()) + '.pickle', 'wb') as f:
 		pickle.dump(note_dict, f)
 
-def take_note(text_spoke):
-	note_content = find_note_content(text_spoke)
-	note_name = note_content.split()[0]
-	note_content = " ".join(note_content.split()[1:])
+def take_note(keywords):
+	note_name = keywords[0]
+	note_content = " ".join(keywords[1:])
 	print(note_name + ' ' + note_content)
 	save_note(note_name, note_content)
 
-	return True
+	return 'Note taken'

@@ -7,6 +7,8 @@ import pickle
 import pyttsx
 import os
 
+# Currently deprecated, as a new input sanitiser is written, which returns a keyword list 
+# containing word whose definition is needed
 def get_word(text_spoke):
 	is_dictionary_tag_found = False
 	for word in text_spoke.split():
@@ -35,8 +37,8 @@ def say(meaning_strings, top_definitions=3):
 	    i += 1    
 	engine.runAndWait()
 
-def find_meaning(text_spoke):
-	word = get_word(text_spoke)
+def find_meaning(keywords):
+	word = keywords[0]
 	get_request_url = 'http://www.dictionary.com/browse/' + word + '?s=ts'
 	print('Word found: ' + word + ' Url: ' + get_request_url)
 
@@ -49,3 +51,5 @@ def find_meaning(text_spoke):
 
 	# print(meaning_strings)
 	say(meaning_strings)
+	
+	return 'Hope you got the answer!'
