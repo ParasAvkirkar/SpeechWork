@@ -1,5 +1,6 @@
 import sys, os
 import datetime
+import pyttsx
 
 # Currently age and female properties are not available
 # They are just added as skeleton
@@ -13,6 +14,25 @@ def get_voice_property(engine, age=30, gender='female', accent='english-us'):
 			return voice
 
 	raise ValueError('Demanded accent does not matched')
+
+
+def speak_sentences(sentences, max_sentences_to_be_spoken=sys.maxsize):
+	print(str(type(sentences)))
+	max_sentences_to_be_spoken = min(max_sentences_to_be_spoken, len(sentences))
+	engine = pyttsx.init()
+	engine.setProperty('rate', 150)
+
+	i = 1
+	voice = get_voice_property(engine, age=10, gender='female')
+	engine.setProperty('voice', voice.id)
+	for s in sentences:
+	    if i > max_sentences_to_be_spoken:
+	    	break
+	    
+	    print(s)
+	    engine.say(s)
+	    i += 1    
+	engine.runAndWait()
 
 
 

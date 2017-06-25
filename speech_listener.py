@@ -2,7 +2,9 @@ import pyaudio
 import speech_recognition as sr
 import sys, os
 import datetime
+import traceback
 
+from daemon_utility import NotifyDaemon
 from command_notes import take_note
 from command_wiki import search_wiki
 from command_meaning import find_meaning
@@ -12,7 +14,6 @@ from text_utilities import sanitize_input
 def map_text_to_command(text_spoke):
 	s = 'Command not recognised. Please speak again'
 	try:
-		
 		dispatcher, new_key_words_list = sanitize_input(text_spoke)
 		s = dispatcher(keywords = new_key_words_list)
 		s = '' if s is None else s
@@ -21,6 +22,7 @@ def map_text_to_command(text_spoke):
 		s = 'Failure while performing task'
 	except Exception as e:
 		print(str(e))
+		print(str(traceback.format_exc()))
 		s = 'Failure while performing task'
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		print('Exception at line '+ str(exc_tb.tb_lineno))
@@ -34,11 +36,11 @@ def get_microphone_source():
 	pass
 
 
-def listen(device_index, timeout=10, phrase_time_limit=10):
+def listen(device_index, timeout=7, phrase_time_limit=10):
 	r = sr.Recognizer()
 	try:
 		with sr.Microphone(device_index=device_index) as source:
-			print('Listening now. Speak within {0} seconds'.format(timeout))
+			print('Start speaking now. I will wait for you only for {0} seconds'.format(timeout-2))
 			# print(str(source))
 			audio = r.listen(source, timeout=timeout, phrase_time_limit=phrase_time_limit)
 
@@ -57,8 +59,16 @@ def listen(device_index, timeout=10, phrase_time_limit=10):
 		
 	except Exception as e:
 		print(str(e))
+		print(str(traceback.format_exc()))
 		# pass
 	
+
+
+def list_down_microphones():
+	for index, name in enumerate(sr.Microphone.list_microphone_names()):
+		print("Microphone with name \"{1}\" found for `Microphone(device_index={0})`".format(index, name))
+
+
 
 if __name__ == '__main__':
 	# index = pyaudio.PyAudio().get_device_count() - 1

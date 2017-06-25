@@ -15,6 +15,8 @@ dispatcher_based_on_keywords = [
 	(['cric', 'versus', 'vs'], get_score_live)
 ]
 
+
+
 def sanitize_input(text_spoke):
 	words_to_be_removed = []
 	dispatcher = None
@@ -43,6 +45,8 @@ def sanitize_input(text_spoke):
 
 	print(new_text_list)
 	return (dispatcher, new_text_list)
+
+
 
 if __name__ == '__main__':
 	sanitize_input('take note name hello world')

@@ -1,8 +1,6 @@
 from pycricbuzz import Cricbuzz
-from utilities import get_voice_property
-from daemon_service import daemon
+from speech_utilities import speak_sentences
 
-import pyttsx
 import sys
 import os
 import traceback
@@ -17,8 +15,10 @@ map_to_cricbuzz_country_notation = {
 	'australia': 'AUS',
 	'england': 'ENG',
 	'bangladesh': 'BAN',
-	'south africa': 'SA',
-	'sri lanka': 'SL'
+	'south africa': 'RSA',
+	'sri lanka': 'SL',
+	'west indies': 'WI',
+	'WINDIES':'WI'
 }
 
 map_to_normal_notation = {
@@ -27,8 +27,10 @@ map_to_normal_notation = {
 	'AUS':'australia',
 	'ENG':'england',
 	'BAN':'bangladesh',
-	'SA':'south africa',
-	'SL':'sri lanka'
+	'RSA':'south africa',
+	'SL':'sri lanka',
+	'WI':'west indies',
+	'WINDIES':'west indies'
 }
 
 map_cricbuzz_month_to_normal_notation = {
@@ -46,6 +48,10 @@ map_cricbuzz_month_to_normal_notation = {
 	'dec':'December'
 }
 
+match_type_balls = {
+	'ODI':300,
+	'T20':120
+}
 
 class Team_Stat(object):
 
@@ -75,15 +81,10 @@ class Team_Stat(object):
     		self.team_name, self.runs, self.wickets, self.overs, self.last_strike_batsmen,
     		self.balls)
 
-class Cric_Daemon(daemon):
-
-	def run(self):
-		while True:
-			pass
 
 
-# The core handler which does following task by delegating subtask to other modules:
-# 1: Fetch the data from cricbuzz api
+# The core handler which does following task by delegating subtasks to other modules:
+# 1: Fetch the data from cricbuzz api and filter it into Team_Stat class
 # 2: Builds the sentences
 # 3: Feeds the sentences to be spoken to a sound device engine
 def get_score_live(keywords):
@@ -93,22 +94,25 @@ def get_score_live(keywords):
 		match_basic_info = get_match_basic_info(keywords=keywords, crickbuzz=c)
 		
 		sentences = []
-		if 'inprogress' not in match_basic_info['mchstate']:
+		if 'inprogress' not in match_basic_info['mchstate'] or 'break' in match_basic_info['mchstate']:
 			sentences = build_sentences(match_info=match_basic_info)
-			say(sentences)
+			speak_sentences(sentences=sentences)
 			return
 
 		match_id = match_basic_info['id']
+		
 		score_card = c.scorecard(match_id)
-		# Actual scorecard is this value, and not the one return by scorecard() function call
+		# Actual scorecard dictionary is inside scorecard dictionary return by above API call
 		# This happened because the original pycricbuzz API does not had proper naming standard
 		match_info = score_card['matchinfo']
 		score_card = score_card['scorecard'] 
+		
 		first_team_stat = None
 		second_team_stat = None
 		commentary = c.commentary(match_id)
 		commentary = commentary['commentary']
-		sentences.append(commentary[0])
+		sentences.append(clean_commentary(commentary[0]))
+		print(str(len(score_card)) + ' length of scorecard')
 		if len(score_card) > 1:
 			print('Second Innings started')
 			first_team_stat = Team_Stat(score_card[1])
@@ -116,31 +120,35 @@ def get_score_live(keywords):
 			second_team_stat = Team_Stat(score_card[0])
 			print(str(second_team_stat))
 			
-			sentences.extend(build_sentences(False, first_team_stat, second_team_stat,
-				match_info=match_info))
+			sentences.extend(build_sentences(is_first_inning=False, first_team_stat=first_team_stat,
+			 second_team_stat=second_team_stat, match_info=match_info))
 		else:
 			first_team_stat = Team_Stat(score_card[0])
-			sentences.extend(build_sentences(True, first_team_stat, second_team_stat,
-				match_info=match_info))
-			print(first_team_stat)
+			print(str(first_team_stat))
+			sentences.extend(build_sentences(is_first_inning=True, first_team_stat=first_team_stat,
+			 second_team_stat=second_team_stat, match_info=match_info))
 
-		say(sentences)
+		speak_sentences(sentences)
 	except ValueError as v:
-		say([str(v)])
+		speak_sentences([str(v)])
 	except Exception as e:
 		print(str(traceback.format_exc()))
 		raise e
-	
+
+
+
 def clean_commentary(commentary):
+	commentary = commentary.replace('!!', '!')
 	if 'out' in commentary:
 		commentary = commentary.split('.')[-1]
 		commentary = commentary.replace(' c ' , ' caught by ')
-		commentary = commentary.replace(' ')
+		# commentary = commentary.replace(' ')
+	return commentary
+
 
 
 def get_match_basic_info(keywords, crickbuzz=None):
-	first_team = keywords[0]
-	second_team = keywords[1]
+	first_team, second_team = get_countries_playing(' '.join(keywords))
 	first_team = map_to_cricbuzz_country_notation[first_team]
 	second_team = map_to_cricbuzz_country_notation[second_team]
 	
@@ -155,28 +163,27 @@ def get_match_basic_info(keywords, crickbuzz=None):
 	raise ValueError('Sorry the match you asked is not currently live')
 
 
+
 def is_match_asked_live(match_basic_info, first_team_asked, second_team_asked):
-	return 'ODI' in match_basic_info['type'] \
+	return ('ODI' in match_basic_info['type'] or 'T20' in match_basic_info['type']) \
 			and match_basic_info['mchstate'] != 'nextlive' \
 		 	and first_team_asked in match_basic_info['mchdesc'] \
 		 	and second_team_asked in match_basic_info['mchdesc']
 
 
-# Currently deprecated, as a new input sanitiser is written, which returns a keyword list 
-# containing countries name
-# Returns name of the countries by stripping off versus or vs in speech
+
+# Parses for name of the countries
 def get_countries_playing(text_spoke):
-	is_cricket_tag_found = False
-	countries = ''
-	for word in text_spoke.split():
-		if is_cricket_tag_found:
-			if 'versus' not in word and 'vs' not in word:
-				countries = countries + word + ' ' 
-		if 'cric' in word:
-			is_cricket_tag_found = True
+	first_team = ''
+	second_team = ''
+	for country_name in map_to_cricbuzz_country_notation:
+		if country_name in text_spoke:
+			if not first_team:
+				first_team = country_name
+			elif not second_team:
+				second_team = country_name
 
-
-	return countries.split()[0], countries.split()[1]
+	return first_team, second_team
 
 
 
@@ -184,6 +191,7 @@ def get_countries_playing(text_spoke):
 # whether match is complete or first or second innings currently played
 def build_sentences(is_first_inning=False, first_team_stat=None, second_team_stat=None, match_info=None):
 	sentences = []
+	match_type = match_info['type']
 	if 'preview' in match_info['mchstate']:
 		sentences.append('Match not yet started.')
 		sentence = match_info['status']
@@ -196,10 +204,9 @@ def build_sentences(is_first_inning=False, first_team_stat=None, second_team_sta
 					temp[i] = map_cricbuzz_month_to_normal_notation[short_notation]			
 
 		sentences.append(' '.join(temp))
-
-	elif 'break' in match_info['mchstate']:
-		sentences.append('Innings break is started. Match will start soon!')
-	elif 'complete' in match_info['mchstate']:
+		return sentences
+	
+	if 'complete' in match_info['mchstate']:
 			sentence = match_info['status']
 			sentence = sentence.lower()
 			sentence = sentence.replace('wkts', 'wickets')
@@ -208,43 +215,42 @@ def build_sentences(is_first_inning=False, first_team_stat=None, second_team_sta
 					sentence = sentence.replace(short_notation.lower(), map_to_normal_notation[short_notation])
 
 			sentences.append(sentence)
+			return sentences
 
-	elif is_first_inning:
+	if 'break' in match_info['mchstate']:
+		sentences.append('Innings break is started. Match will start soon!')
+		print('Innings break is started. Match will start soon!')
+		return
+
+	if is_first_inning:
 		sentences.append('{0} made {1} runs with a fall of {2} wickets.'.format(
 			first_team_stat.team_name, first_team_stat.runs, first_team_stat.wickets))
-		if first_team_stat.wickets < 10 and first_team_stat.balls < 300:
-			sentences.append('{0} overs are remaining.'.format(calculate_overs_notation_from_balls(300 - 
-				first_team_stat.balls)))
+		if first_team_stat.wickets < 10 and first_team_stat.balls < match_type_balls[match_type]:
+			overs_remaining = calculate_overs_notation_from_balls(match_type_balls[match_type] - first_team_stat.balls)
+			
+			sentences.append('{0} overs are remaining.'.format(overs_remaining))
 			sentences.append('{0} are on crease.'.format(first_team_stat.last_strike_batsmen))
 
 	else:
+		print(str(is_first_inning))
+		balls_remaining = match_type_balls[match_type] - second_team_stat.balls
+		runs_remaining = first_team_stat.runs + 1 - second_team_stat.runs
 		sentences.append('{0} needs {1} runs from {2} balls.'.format(second_team_stat.team_name
-			, first_team_stat.runs + 1 - second_team_stat.runs, 300 - second_team_stat.balls))
-		if second_team_stat.wickets < 10 and second_team_stat.balls < 300:
+			, runs_remaining, balls_remaining))
+
+		if second_team_stat.wickets < 10 and second_team_stat.balls < match_type_balls[match_type]:
 			sentences.append('{0} wickets have fallen down'.format(second_team_stat.wickets))
 			sentences.append('{0} are on crease.'.format(second_team_stat.last_strike_batsmen))
 
-
 	return sentences
+
+
 
 def calculate_balls_from_overs_notation(overs_notation):
 	return int(overs_notation)*6 + int(overs_notation*10) % 10
 
+
+
 def calculate_overs_notation_from_balls(balls):
 	return float(balls//6) + float(balls%6)/10
-
-
-
-def say(sentences):
-	engine = pyttsx.init()
-	engine.setProperty('rate', 145)
-
-	voice = get_voice_property(engine, age=10, gender='female')
-	engine.setProperty('voice', voice.id)
-
-	for s in sentences:
-	    print(s)
-	    engine.say(s)
-
-	engine.runAndWait()
 

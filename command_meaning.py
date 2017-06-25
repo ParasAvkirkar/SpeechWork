@@ -1,10 +1,9 @@
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 from SpeechWork.spiders.spider_launcher import launch_spider
-from utilities import get_voice_property
+from speech_utilities import speak_sentences
 
 import pickle
-import pyttsx
 import os
 
 # Currently deprecated, as a new input sanitiser is written, which returns a keyword list 
@@ -19,23 +18,6 @@ def get_word(text_spoke):
 			is_dictionary_tag_found = True
 
 
-# Meaning strings are strings returned by spider
-# Only fix number of top defintions would be 'said' by PyTTSx Engine
-def say(meaning_strings, top_definitions=3):
-	engine = pyttsx.init()
-	engine.setProperty('rate', 150)
-
-	i = 1
-	voice = get_voice_property(engine, age=10, gender='female')
-	engine.setProperty('voice', voice.id)
-	for s in meaning_strings:
-	    if i > top_definitions:
-	    	break
-	    
-	    print(s)
-	    engine.say(s)
-	    i += 1    
-	engine.runAndWait()
 
 def find_meaning(keywords):
 	word = keywords[0]
@@ -50,6 +32,6 @@ def find_meaning(keywords):
 		meaning_strings = pickle.load(f)
 
 	# print(meaning_strings)
-	say(meaning_strings)
+	speak_sentences(meaning_strings, max_sentences_to_be_spoken=3)
 	
 	return 'Hope you got the answer!'

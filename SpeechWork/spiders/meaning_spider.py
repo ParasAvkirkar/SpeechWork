@@ -39,6 +39,6 @@ class MeaningSpider(scrapy.Spider):
             pickle.dump(meaning_strings, f)
             print('Pickle dumped')
 
-        with open('meanings/html-logs/'+filename, 'wb') as f:
+        with open('scrapy_logs/html-logs/'+filename, 'wb') as f:
             f.write(response.body)
         self.log('Saved file %s' % filename)
